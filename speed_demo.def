@@ -1,0 +1,41 @@
+Bootstrap: docker
+From: jupyter/base-notebook:latest
+
+%environment
+	export LC_ALL=en_US.utf-8
+	export LANG=en_US.utf-8
+	. /opt/etc/bashrc
+
+%files
+	/home/kerrie/repos/speed_demo/NB_speed_demo.ipynb /opt/demo_files/NB_speed_demo.ipynb
+	/home/kerrie/repos/speed_demo/data/tmin_daily_singlegrid_8110.nc /opt/demo_files/data/tmin_daily_singlegrid_8110.nc
+	/home/kerrie/repos/speed_demo/data/tmax_daily_singlegrid_8110.nc /opt/demo_files/data/tmax_daily_singlegrid_8110.nc
+
+%post
+	mkdir -p /opt/etc
+	. /opt/conda/etc/profile.d/conda.sh
+	conda create -y --name 00speeddemo00 numpy numba dask xarray netcdf4 matplotlib jupyter
+	conda clean --all
+	echo "#! /bin/bash\n\n# script to activate the conda environment" > ~/.bashrc
+	conda init bash
+	echo "\nconda activate 00speeddemo00" >> ~/.bashrc
+	cp ~/.bashrc /opt/etc/bashrc
+	/opt/conda/envs/00speeddemo00/bin/python -m ipykernel install --prefix /opt/conda/envs/00speeddemo00 --name 00speeddemo00 --display-name speed_demo
+
+%runscript
+	echo "#####################################################################"
+	echo "#####################################################################"
+	echo "Make sure NB_speed_demo.ipynb is in the same directory as this       "
+	echo "container before executing. (Ctl+c if you need to exit to fix this)  "
+	echo "                                                                     "
+	echo "Now opening jupyter notebook server... follow directions on screen   " 
+	echo "(copy/paste one of the links shown below into any internet browser)  "
+	echo "                                                                     "
+	echo "once you've opened the jupyter server, open your notebook and...     "
+	echo "change the kernel: Kernel > Change Kernel > speedtest                "
+	echo "execute notebook cells: Shift+Ctl or by clicking Run                 "  
+	echo "                                                                     "
+	echo "to stop running the notebook and container: Ctl+c at command prompt  "
+	echo "#####################################################################"
+	echo "#####################################################################"
+	exec sh -c "jupyter notebook /opt/demo_files/NB_speed_demo.ipynb"
